@@ -1,0 +1,163 @@
+----------------------- Without Response -----
+private void signUpApiTask() {
+        if (Utils.isNetworkAvailable(this)) {
+//            Utils.showProgress(this);
+            progressBar.setVisibility(View.VISIBLE);
+            txtSignUp.setText("");
+            JsonObject requestAPI = new JsonObject();
+            JsonObject data = new JsonObject();
+            try {
+                data.addProperty("langType", Const.langType);
+                data.addProperty("name", name.getText().toString().trim());
+                data.addProperty("email", email.getText().toString().trim());
+                data.addProperty("phone", phoneNumber);
+                data.addProperty("password", password.getText().toString().trim());
+                data.addProperty("role", Const.userRole);
+
+                requestAPI.add("data", data);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+//            Utils.showProgress(this);
+            progressBar.setVisibility(View.VISIBLE);
+            txtSignUp.setText("");
+            ApiInterface request = ApiInterface.Creator.newFullTeamService();
+            Call<Object> call = request.signUp(requestAPI);
+            call.enqueue(new Callback<Object>() {
+                @RequiresApi(api = Build.VERSION_CODES.M)
+                @Override
+                public void onResponse(Call<Object> call, Response<Object> response) {
+//                    Utils.dismissProgress();
+                    progressBar.setVisibility(View.GONE);
+                    txtSignUp.setText("Sign up");
+                    try {
+                        switch (response.code()) {
+                            case 200:
+                                String data = new Gson().toJson(response.body());
+                                JSONObject joMain = new JSONObject(data);
+                                String status = joMain.getString("status");
+                                String message = joMain.getString("message");
+                                //Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+                                if (status.equalsIgnoreCase("0")) {
+                                    Utils.showSnackBar(rootView, SignupActivity.this, message + "", Const.alert, Snackbar.LENGTH_SHORT);
+                                } else if (status.equalsIgnoreCase("1")) {
+                                    Utils.customToast(SignupActivity.this, message);
+                                } else if (status.equalsIgnoreCase("3")) {
+                                    Utils.customToast(SignupActivity.this, message);
+                                    startActivity(new Intent(SignupActivity.this, VerificationActivity.class)
+                                            .putExtra(VerificationActivity.EXTRA_EMAIL, email.getText().toString().trim())
+                                            .putExtra(VerificationActivity.EXTRA_FLAGE, false));
+                                    finish();
+                                } else if (status.equals("2")) {
+                                    Utils.showSnackBar(rootView, SignupActivity.this, message + "", Const.alert, Snackbar.LENGTH_SHORT);
+                                } else if (status.equalsIgnoreCase("6")) {
+
+                                }
+                                break;
+                            case 404:
+                            case 500:
+                                Utils.showSnackBar(rootView, SignupActivity.this, R.string.serverNotResponding + "", Const.error, Snackbar.LENGTH_SHORT);
+                                break;
+                            default:
+                                break;
+                        }
+                    } catch (Exception e) {
+                        Utils.showSnackBar(rootView, SignupActivity.this, e.getMessage(), Const.error, Snackbar.LENGTH_SHORT);
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<Object> call, Throwable t) {
+                    Utils.showSnackBar(rootView, SignupActivity.this, "", Const.error, Snackbar.LENGTH_SHORT);
+                }
+            });
+        } else {
+            progressBar.setVisibility(View.GONE);
+            txtSignUp.setText("Sign up");
+//            Utils.dismissProgress();
+            Utils.showSnackBar(rootView, this, getString(R.string.noInternet), Const.noInternet, Snackbar.LENGTH_SHORT);
+        }
+    }
+
+
+
+
+-------------------------------------------------
+  try {
+            if (Utils.isNetworkAvailable(getActivity())) {
+                Utils.showProgress(getActivity());
+                JsonObject requestAPI = new JsonObject();
+                JsonObject data = new JsonObject();
+                try {
+                    data.addProperty("langType", Pref.getStringValue(getActivity(), Const.langType, ""));
+                    data.addProperty("courseId", "1");
+                    data.addProperty("deviceType", Const.deviceType);
+                    data.addProperty("token", Pref.getStringValue(getActivity(), Const.token, ""));
+
+                    requestAPI.add("data", data);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                Utils.showProgress(getActivity());
+//                loading_btn.startLoading();
+                ApiInterface request = ApiInterface.Creator.newFullTeamService();
+                Call<CourseUnitResponse> jobListResponseCall = request.getCourseUnits(requestAPI);
+                jobListResponseCall.enqueue(new Callback<CourseUnitResponse>() {
+                    @RequiresApi(api = Build.VERSION_CODES.M)
+                    @Override
+                    public void onResponse(Call<CourseUnitResponse> call, retrofit2.Response<CourseUnitResponse> response) {
+                        Utils.dismissProgress();
+                        if (response == null) {
+                            Utils.showToast(getActivity(), getString(R.string.error_while_fetching_data_from_server));
+                        } else {
+                            if (response.isSuccessful()) {
+                                String data = new Gson().toJson(response.body());
+                                courseUnitResponse = new Gson().fromJson(data, CourseUnitResponse.class);
+                                if (courseUnitResponse.getStatus().equalsIgnoreCase("0")) {
+                                    Utils.showSnackBar(rootView, getActivity(), response.body().getMessage(), Const.alert, Snackbar.LENGTH_SHORT);
+                                } else if (courseUnitResponse.getStatus().equalsIgnoreCase("1")) {
+                                    recyclerCourse.setVisibility(View.VISIBLE);
+                                    txtDataNotFound.setVisibility(View.GONE);
+                                    courseList.addAll(courseUnitResponse.getData());
+                                    courseContentsAdapter.notifyDataSetChanged();
+
+                                    txtQuizComplete.setText(courseUnitResponse.getQuizCompleted());
+                                    txtQuizRemaining.setText(courseUnitResponse.getQuizRemaining());
+
+                                    txtChapterRemaining.setText(courseUnitResponse.getTotalRemainingUnit());
+                                    txtChapterComplete.setText(courseUnitResponse.getTotalCompletedUnit());
+
+                                    txtEstTimeRemaining.setText(courseUnitResponse.getTotalRemainingTime() + " Hours");
+                                    txtTimeSpent.setText(courseUnitResponse.getTotalRemainingTime());
+
+                                } else if (courseUnitResponse.getStatus().equalsIgnoreCase("2") || (courseUnitResponse.getStatus().equalsIgnoreCase("5"))) {
+                                    Utils.showToast(getActivity(), response.body().getMessage());
+                                    Utils.logOut(getActivity());
+                                    startActivity(new Intent(getActivity(), LoginActivity.class));
+                                } else if (courseUnitResponse.getStatus().equalsIgnoreCase("6")) {
+                                    Utils.dismissProgress();
+                                    txtDataNotFound.setVisibility(View.VISIBLE);
+                                    txtDataNotFound.setText(courseUnitResponse.getMessage());
+                                }
+                            } else {
+                                Utils.showSnackBar(rootView, getActivity(), getString(R.string.invalid_data_response), Const.error, Snackbar.LENGTH_INDEFINITE);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CourseUnitResponse> call, Throwable t) {
+                        Utils.dismissProgress();
+                        Utils.showSnackBar(rootView, getActivity(), getString(R.string.serverNotResponding), Const.error, Snackbar.LENGTH_INDEFINITE);
+                    }
+                });
+            } else {
+                Utils.showToast(getActivity(), getString(R.string.noInternet));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+

@@ -1,0 +1,100 @@
+ -------------------------- Wihtout Response --------------------------
+Api api;
+api = RetrofitClient.getInstance().getApi();
+
+try {
+            if (Utils.isNetworkAvailable(activity)) {
+                Utils.showProgress(activity);
+
+                Call<com.app.famezone.apiCalling.Response<JsonElement>> call = api.logout(Pref.getStringValue(activity, Const.userId, ""),
+                        Pref.getStringValue(activity, Const.authToken, ""), Pref.getStringValue(activity, Const.deviceToken, ""));
+
+                call.enqueue(new Callback<com.app.famezone.apiCalling.Response<JsonElement>>() {
+                    @Override
+                    public void onResponse(Call<com.app.famezone.apiCalling.Response<JsonElement>> call, Response<com.app.famezone.apiCalling.Response<JsonElement>> response) {
+                        Utils.dismissProgress();
+                        if (response.isSuccessful()) {
+
+                            if (response.body().getMessage().equalsIgnoreCase("Session has been expired")) {
+                                Utils.RedirectToLogin(activity);
+
+                            } else {
+                                Utils.RedirectToLogin(activity);
+
+                                startActivity(new Intent(activity, LoginActivity.class));
+                            }
+                        } else {
+                            if (response.body().getMessage().equalsIgnoreCase("Session Expired")) {
+                                Utils.RedirectToLogin(activity);
+                            } else {
+                                Utils.showAlert(activity, response.body().getMessage());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<com.app.famezone.apiCalling.Response<JsonElement>> call, Throwable t) {
+                        Utils.dismissProgress();
+                    }
+                });
+            } else {
+                Utils.showToast(activity, getResources().getString(R.string.check_your_internet_connection));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
+
+---------------------------------------- With Reponse -------------------------------------
+ try {
+            if (Utils.isNetworkAvailable(activity)) {
+                Utils.showProgress(activity);
+
+                Call<ListWebSetting> webSetting = api.listWebSetting(Pref.getStringValue(activity, Const.userId, ""),
+                        Pref.getStringValue(activity, Const.authToken, ""));
+
+                webSetting.enqueue(new Callback<ListWebSetting>() {
+                    @Override
+                    public void onResponse(Call<ListWebSetting> call, Response<ListWebSetting> response) {
+                        Utils.dismissProgress();
+
+                        if (response.isSuccessful()) {
+
+                            String data = new Gson().toJson(response.body());
+                            listWebSetting = new Gson().fromJson(data, ListWebSetting.class);
+
+                            if (listWebSetting.getMessage().equalsIgnoreCase("Session has been expired")) {
+                                Utils.RedirectToLogin(activity);
+                            } else {
+                                result = listWebSetting.getResult();
+
+                                rupees = result.getRupees();
+                                views = result.getViews();
+                                usergetcoin = result.getUsergetcoin();
+
+                                lblPrice.setText(rupees + " Rupees = " + views + " Views (Defined by admin ) \n User will get: " + usergetcoin + " coin for 1 View");
+                            }
+                        } else {
+                            if (response.body().getMessage().equalsIgnoreCase("Session Expired")) {
+                                Utils.RedirectToLogin(activity);
+                            } else {
+                                Utils.showAlert(activity, response.body().getMessage());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ListWebSetting> call, Throwable t) {
+                        Utils.dismissProgress();
+                    }
+                });
+            } else {
+                Utils.showToast(activity, getResources().getString(R.string.check_your_internet_connection));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
