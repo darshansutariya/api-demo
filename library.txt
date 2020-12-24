@@ -1,0 +1,6 @@
+ android:networkSecurityConfig="@xml/network_security_config"
+ multiDexEnabled true
+
+    //Bind
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.1.0'
+    implementation 'com.jakewharton:butterknife:10.2.0'
