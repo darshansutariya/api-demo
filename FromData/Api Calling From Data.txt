@@ -1,4 +1,4 @@
- -------------------------- Wihtout Response --------------------------
+ --------------------------From Data Wihtout Response --------------------------
 Api api;
 api = RetrofitClient.getInstance().getApi();
 
@@ -49,7 +49,7 @@ try {
 
 
 
----------------------------------------- With Reponse -------------------------------------
+----------------------------------------FromData With Reponse -------------------------------------
  try {
             if (Utils.isNetworkAvailable(activity)) {
                 Utils.showProgress(activity);
